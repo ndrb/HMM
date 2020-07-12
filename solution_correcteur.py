@@ -71,13 +71,20 @@ class Correcteur:
         if mot.isdigit():
             return self.corrige_binaire(mot)
 
+        return self.correcter(mot)
+
+
+
+
+
+    def correcter(self, mot):
         dim = np.zeros((26, len(mot)))
 
         # Init: alpha(i,1) = P(S1 = S1 | H1 = i) P(H1=i)
         i = 0
         while i < 26:
             dim[i][0] = self.p_observation[self.letters2int[mot[0]], i] * self.p_init[i]
-            #print(self.p_observation[self.letters2int[mot[0]], i] * self.p_init[i])
+            # print(self.p_observation[self.letters2int[mot[0]], i] * self.p_init[i])
             i += 1
 
         righteous = []
@@ -92,19 +99,18 @@ class Correcteur:
                 calcul = []
                 t = 0
                 while t < 26:
-                    lol = k-1
-                    calcul.append( self.p_transition[ i, t] * dim[t][lol] )
-                    #print(self.p_transition[ self.letters2int[mot[k]] , self.letters2int[mot[lol]] ])
-                    #print(dim[t][lol])
+                    lol = k - 1
+                    calcul.append(self.p_transition[i, t] * dim[t][lol])
+                    # print(self.p_transition[ self.letters2int[mot[k]] , self.letters2int[mot[lol]] ])
+                    # print(dim[t][lol])
                     t += 1
-                #print(calcul)
+                # print(calcul)
                 dim[i][k] = self.p_observation[self.letters2int[mot[k]], i] * max(calcul)
                 righteous.append(self.get_position_of_max(calcul))
                 i += 1
             k += 1
 
-
-        #print(dim)
+        # print(dim)
 
         i = 0
         pos = -1
@@ -115,10 +121,9 @@ class Correcteur:
                 pos = i
             i += 1
 
-
         righteous_two = np.array(righteous)
-        righteous_two = righteous_two.reshape(len(mot)-1,26)
-        print(righteous_two)
+        righteous_two = righteous_two.reshape(len(mot) - 1, 26)
+        #print(righteous_two)
         righteous_final = []
         for x in righteous_two:
             righteous_final.append(self.most_frequent(x))
@@ -127,9 +132,13 @@ class Correcteur:
         mot_co = ""
         for x in righteous_final:
             mot_co += self.int2letters[x]
-        #print(mot_co)
+        # print(mot_co)
         # Retourne le mot sans correction avec une probabilité de 0.0 (.~= À MODIFIER =~.)
         return mot_co, maxi
+
+
+
+
 
     def corrige_binaire(self, mot):
         observation = [[0.9, 0.2],
@@ -187,7 +196,7 @@ class Correcteur:
         mot_co = ""
         for x in righteous_final:
             mot_co += str(x)
-            
+
         return mot_co, maxi
 
     def get_position_of_max(self, calcul):
