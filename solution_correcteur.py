@@ -148,18 +148,34 @@ class Correcteur:
                     calcul.append(transition[i][t] * dim[t][lol])
                     t += 1
                 dim[i][k] = observation[int(mot[k])][i] * max(calcul)
+                righteous.append(self.get_position_of_max(calcul))
                 i += 1
             k += 1
 
         #print(dim)
-        print(righteous)
-        maxi = 0
+        #print(righteous)
+        righteous_two = np.array(righteous)
+        righteous_two = righteous_two.reshape(len(mot)-1,2)
+        #print(righteous_two)
+        righteous_final = []
+        for x in righteous_two:
+            righteous_final.append(max(x))
+
+
         i = 0
+        pos = -1
+        maxi = -1
         while i < 2:
             if (dim[i][-1]) > maxi:
                 maxi = (dim[i][-1])
+                pos = i
             i += 1
-        return mot, maxi
+        righteous_final.append(pos)
+        #print(righteous_final)
+        mot_co = ""
+        for x in righteous_final:
+            mot_co += str(x)
+        return mot_co, maxi
 
     def get_position_of_max(selfself, calcul):
         i = 0
