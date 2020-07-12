@@ -68,12 +68,6 @@ class Correcteur:
         #       self.int2letters
         #       self.letters2int
 
-        #print(self.p_init)
-        #print(self.p_observation)
-        #print("KMSKMDKNFNSDJIFBJIDSBFHDS \n \n \n \n \n")
-        #print(self.p_transition)
-        #print("KMSKMDKNFNSDJIFBJIDSBFHDS \n \n \n \n \n")
-
         if mot.isdigit():
             return self.corrige_binaire(mot)
 
@@ -86,6 +80,7 @@ class Correcteur:
             #print(self.p_observation[self.letters2int[mot[0]], i] * self.p_init[i])
             i += 1
 
+        righteous = []
 
         k = 1
         while k < len(mot):
@@ -104,20 +99,37 @@ class Correcteur:
                     t += 1
                 #print(calcul)
                 dim[i][k] = self.p_observation[self.letters2int[mot[k]], i] * max(calcul)
+                righteous.append(self.get_position_of_max(calcul))
                 i += 1
             k += 1
 
 
         #print(dim)
-        maxi = 0
+
         i = 0
+        pos = -1
+        maxi = -1
         while i < 26:
             if (dim[i][-1]) > maxi:
                 maxi = (dim[i][-1])
+                pos = i
             i += 1
 
+
+        righteous_two = np.array(righteous)
+        righteous_two = righteous_two.reshape(len(mot)-1,26)
+        print(righteous_two)
+        righteous_final = []
+        for x in righteous_two:
+            righteous_final.append(self.most_frequent(x))
+        righteous_final.append(pos)
+        print(righteous_final)
+        mot_co = ""
+        for x in righteous_final:
+            mot_co += self.int2letters[x]
+        #print(mot_co)
         # Retourne le mot sans correction avec une probabilité de 0.0 (.~= À MODIFIER =~.)
-        return mot, maxi
+        return mot_co, maxi
 
     def corrige_binaire(self, mot):
         observation = [[0.9, 0.2],
@@ -175,9 +187,10 @@ class Correcteur:
         mot_co = ""
         for x in righteous_final:
             mot_co += str(x)
+            
         return mot_co, maxi
 
-    def get_position_of_max(selfself, calcul):
+    def get_position_of_max(self, calcul):
         i = 0
         pos = -1
         maxi = -1
@@ -187,3 +200,7 @@ class Correcteur:
                 maxi = calcul[i]
             i += 1
         return pos
+
+    def most_frequent(self, List):
+        List = List.tolist()
+        return max(set(List), key=List.count)
