@@ -84,7 +84,6 @@ class Correcteur:
         i = 0
         while i < 26:
             dim[i][0] = self.p_observation[self.letters2int[mot[0]], i] * self.p_init[i]
-            # print(self.p_observation[self.letters2int[mot[0]], i] * self.p_init[i])
             i += 1
 
         righteous = []
@@ -93,24 +92,20 @@ class Correcteur:
         while k < len(mot):
             i = 0
             while i < 26:
-                # alpha(i,t+1) = P(S(t+1) | H(t+1)=i) max{P(H(t+1)|H(t)=j) alpha(j, t),,,,,}
-                # alpha(0,2) = P(S2 = 0 | H2 = 0) max{P(H2=0|H1=0) alpha(0,1), P(H2=0|h1=1 alpha(1,1))}
+                # alpha(i,t+1) = P(S(t+1) | H(t+1)=i) max{P(H(t+1)|H(t)=j) alpha(j, t)}
                 # calculate 26 values then choose max
                 calcul = []
                 t = 0
                 while t < 26:
                     lol = k - 1
                     calcul.append(self.p_transition[i, t] * dim[t][lol])
-                    # print(self.p_transition[ self.letters2int[mot[k]] , self.letters2int[mot[lol]] ])
-                    # print(dim[t][lol])
                     t += 1
-                # print(calcul)
                 dim[i][k] = self.p_observation[self.letters2int[mot[k]], i] * max(calcul)
+                #For every cell in the column, we have 26 elements in calcul, we only want the position of max value
                 righteous.append(self.get_position_of_max(calcul))
+                #righteous is gonna have the position of the maximum value for every cell
                 i += 1
             k += 1
-
-        # print(dim)
 
         i = 0
         pos = -1
@@ -121,18 +116,38 @@ class Correcteur:
                 pos = i
             i += 1
 
+
+        #print(righteous)
+
         righteous_two = np.array(righteous)
-        righteous_two = righteous_two.reshape(len(mot) - 1, 26)
+        #rightous two has a huge array in it, and it contains the position of the max value for every cell
+        righteous_two = righteous_two.reshape(len(mot)-1,26)
+
         #print(righteous_two)
-        righteous_final = []
-        for x in righteous_two:
-            righteous_final.append(self.most_frequent(x))
-        righteous_final.append(pos)
-        print(righteous_final)
+
+        #using the 'pos' I need to backtrack
+        final_positions = []
+        final_positions.append(pos)
+        index = len(mot)-2
+        dude_plz_work = pos
+        while index >= 0:
+            final_positions.append(righteous_two[index][dude_plz_work])
+            dude_plz_work = righteous_two[index][dude_plz_work]
+            index -=1
+
+
+        #print(final_positions)
+        print(list(reversed(final_positions)))
+        dudeee = list(reversed(final_positions))
+        real_final = []
+        for x in dudeee:
+            real_final.append(self.int2letters[x])
+
+        print(real_final)
         mot_co = ""
-        for x in righteous_final:
-            mot_co += self.int2letters[x]
-        # print(mot_co)
+        for x in real_final:
+            mot_co += x
+
         # Retourne le mot sans correction avec une probabilité de 0.0 (.~= À MODIFIER =~.)
         return mot_co, maxi
 
@@ -164,8 +179,6 @@ class Correcteur:
                 t = 0
                 while t < 2:
                     lol = k - 1
-                    #print(transition[i][t])
-                    #print(dim[t][lol])
                     calcul.append(transition[i][t] * dim[t][lol])
                     t += 1
                 dim[i][k] = observation[int(mot[k])][i] * max(calcul)
@@ -173,15 +186,12 @@ class Correcteur:
                 i += 1
             k += 1
 
-        #print(dim)
-        #print(righteous)
+
         righteous_two = np.array(righteous)
         righteous_two = righteous_two.reshape(len(mot)-1,2)
-        #print(righteous_two)
         righteous_final = []
         for x in righteous_two:
             righteous_final.append(max(x))
-
 
         i = 0
         pos = -1
@@ -192,7 +202,6 @@ class Correcteur:
                 pos = i
             i += 1
         righteous_final.append(pos)
-        #print(righteous_final)
         mot_co = ""
         for x in righteous_final:
             mot_co += str(x)
@@ -209,7 +218,3 @@ class Correcteur:
                 maxi = calcul[i]
             i += 1
         return pos
-
-    def most_frequent(self, List):
-        List = List.tolist()
-        return max(set(List), key=List.count)
