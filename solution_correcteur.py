@@ -120,7 +120,6 @@ class Correcteur:
         #print(righteous)
 
         righteous_two = np.array(righteous)
-        #rightous two has a huge array in it, and it contains the position of the max value for every cell
         righteous_two = righteous_two.reshape(len(mot)-1,26)
 
         #print(righteous_two)
@@ -136,14 +135,11 @@ class Correcteur:
             index -=1
 
 
-        #print(final_positions)
-        print(list(reversed(final_positions)))
         dudeee = list(reversed(final_positions))
         real_final = []
         for x in dudeee:
             real_final.append(self.int2letters[x])
 
-        print(real_final)
         mot_co = ""
         for x in real_final:
             mot_co += x
@@ -187,11 +183,6 @@ class Correcteur:
             k += 1
 
 
-        righteous_two = np.array(righteous)
-        righteous_two = righteous_two.reshape(len(mot)-1,2)
-        righteous_final = []
-        for x in righteous_two:
-            righteous_final.append(max(x))
 
         i = 0
         pos = -1
@@ -201,10 +192,33 @@ class Correcteur:
                 maxi = (dim[i][-1])
                 pos = i
             i += 1
-        righteous_final.append(pos)
+
+
+        righteous_two = np.array(righteous)
+        #rightous two has a huge array in it, and it contains the position of the max value for every cell
+        righteous_two = righteous_two.reshape(len(mot)-1,2)
+
+        #print(righteous_two)
+
+        #using the 'pos' I need to backtrack
+        final_positions = []
+        final_positions.append(pos)
+        index = len(mot)-2
+        dude_plz_work = pos
+        while index >= 0:
+            final_positions.append(righteous_two[index][dude_plz_work])
+            dude_plz_work = righteous_two[index][dude_plz_work]
+            index -=1
+
+
+        dudeee = list(reversed(final_positions))
+        real_final = []
+        for x in dudeee:
+            real_final.append(self.int2letters[x])
+
         mot_co = ""
-        for x in righteous_final:
-            mot_co += str(x)
+        for x in real_final:
+            mot_co += x
 
         return mot_co, maxi
 
