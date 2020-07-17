@@ -32,6 +32,42 @@ import numpy as np
 # retour: Un tableau Numpy 1D de float donnant la valeur de chaque état du mdp, selon leur ordre dans mdp.etats.
 ### 
 def calcul_valeur(mdp, plan):
+    # BS START
+    states = mdp.etats
+    actions = [0,1,2]
+    N_STATES = len(states)
+    N_ACTIONS = len(actions)
+    P = np.zeros((N_STATES, N_ACTIONS, N_STATES))  # transition probability
+
+    for etat in states:
+        for act in actions:
+            holder_value = 0
+            if act == 0:
+                holder_value = '1'
+            if act == 1:
+                holder_value = 'D'
+            if act == 2:
+                holder_value = 'DD'
+            lol = mdp.modele_transition[(etat,holder_value)]
+            for x in lol:
+                P[etat, act, x[0]] = x[1]
+
+    #print(P)
+
+    gamma = mdp.escompte
+
+    # initialize policy and value arbitrarily
+    policy = [0 for s in range(N_STATES)]
+    V = np.zeros(N_STATES)
+
+
+    for s in range(N_STATES):
+        V[s] = sum([P[s,policy[s],s1] * (mdp.recompenses[s1] + gamma*V[s1]) for s1 in range(N_STATES)])
+        # print "Run for state", s
+
+    return V
+    # BS FINISH
+
     values = [1] * len(mdp.etats)
     real_actions = mdp.actions[0]
 
