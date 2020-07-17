@@ -32,42 +32,6 @@ import numpy as np
 # retour: Un tableau Numpy 1D de float donnant la valeur de chaque état du mdp, selon leur ordre dans mdp.etats.
 ### 
 def calcul_valeur(mdp, plan):
-    # BS START
-    states = mdp.etats
-    actions = [0,1,2]
-    N_STATES = len(states)
-    N_ACTIONS = len(actions)
-    P = np.zeros((N_STATES, N_ACTIONS, N_STATES))  # transition probability
-
-    for etat in states:
-        for act in actions:
-            holder_value = 0
-            if act == 0:
-                holder_value = '1'
-            if act == 1:
-                holder_value = 'D'
-            if act == 2:
-                holder_value = 'DD'
-            lol = mdp.modele_transition[(etat,holder_value)]
-            for x in lol:
-                P[etat, act, x[0]] = x[1]
-
-    #print(P)
-
-    gamma = mdp.escompte
-
-    # initialize policy and value arbitrarily
-    policy = [0 for s in range(N_STATES)]
-    V = np.zeros(N_STATES)
-
-
-    for s in range(N_STATES):
-        V[s] = sum([P[s,policy[s],s1] * (mdp.recompenses[s1] + gamma*V[s1]) for s1 in range(N_STATES)])
-        # print "Run for state", s
-
-    return V
-    # BS FINISH
-
     values = [1] * len(mdp.etats)
     real_actions = mdp.actions[0]
 
@@ -147,6 +111,69 @@ def iteration_politiques(mdp,plan_initial):
     # (R(s) + y* sum( P(s_prime | s,a) V(plan,s_prime))) > V(plan,s) then loop!
     plan = calcul_plan(mdp, values)
 
+    # BS START
+    states = mdp.etats
+    actions = [0,1,2]
+    N_STATES = len(states)
+    N_ACTIONS = len(actions)
+    P = np.zeros((N_STATES, N_ACTIONS, N_STATES))  # transition probability
+
+    for etat in states:
+        for act in actions:
+            holder_value = 0
+            if act == 0:
+                holder_value = '1'
+            if act == 1:
+                holder_value = 'D'
+            if act == 2:
+                holder_value = 'DD'
+            lol = mdp.modele_transition[(etat,holder_value)]
+            for x in lol:
+                P[etat, act, x[0]] = x[1]
+
+    #print(P)
+
+    gamma = mdp.escompte
+
+    # initialize policy and value arbitrarily
+    policy = [0 for s in range(N_STATES)]
+    V = np.zeros(N_STATES)
+
+    is_value_changed = True
+    iterations = 0
+    while is_value_changed:
+        is_value_changed = False
+        iterations += 1
+        # run value iteration for each state
+        for s in range(N_STATES):
+            V[s] = sum([P[s, policy[s], s1] * (mdp.recompenses[s1] + gamma * V[s1]) for s1 in range(N_STATES)])
+            # print "Run for state", s
+
+        for s in range(N_STATES):
+            q_best = V[s]
+            # print "State", s, "q_best", q_best
+            for a in range(N_ACTIONS):
+                q_sa = sum([P[s, a, s1] * (mdp.recompenses[s1] + gamma * V[s1]) for s1 in range(N_STATES)])
+                if q_sa > q_best:
+                    policy[s] = a
+                    q_best = q_sa
+                    is_value_changed = True
+        # print "Policy now", policy
+    # BS FINISH
 
     #return plan
-    return plan, values
+    plan = dict([(s, ' ') for s in mdp.etats])
+    i = 0
+    while i < len(policy):
+        plan[i] = policy[i]
+        i += 1
+    j = 0
+    while j < len(plan):
+        if plan[j] == 0:
+            plan[j] = '1'
+        if plan[j] == 1:
+            plan[j] = 'D'
+        if plan[j] == 2:
+            plan[j] = 'DD'
+        j += 1
+    return plan, V
