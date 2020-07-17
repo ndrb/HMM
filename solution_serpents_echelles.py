@@ -32,9 +32,7 @@ import numpy as np
 # retour: Un tableau Numpy 1D de float donnant la valeur de chaque état du mdp, selon leur ordre dans mdp.etats.
 ### 
 def calcul_valeur(mdp, plan):
-
     values = [0] * len(mdp.etats)
-
     i = 0
     while i < len(mdp.etats):
         cumulative_sum = 0
@@ -44,7 +42,6 @@ def calcul_valeur(mdp, plan):
             j += 1
         values[i] = cumulative_sum
         i += 1
-
     return values
 
 
@@ -58,42 +55,6 @@ def calcul_valeur(mdp, plan):
 # retour: Un plan (dictionnaire) qui maximise la valeur future espérée, en fonction du tableau "valeur".
 ### 
 def calcul_plan(mdp, valeur):
-    is_value_changed = True
-    iterations = 0
-    real_actions = mdp.actions[0]
-
-    plan = dict([(s, ' ') for s in mdp.etats])
-    while is_value_changed:
-        is_value_changed = False
-        iterations += 1
-
-        z = 0
-        while z < len(mdp.etats):
-            best = valeur[z]
-            y = 0
-            while y < len(real_actions):
-                cumulative_sum = 0
-                for element in mdp.modele_transition[(z, real_actions[y])]:
-                    cumulative_sum += element[1]
-                answer_calc = mdp.recompenses[z] + mdp.escompte * cumulative_sum
-                if answer_calc > best:
-                    plan[z] = y
-                    best = answer_calc
-                    is_value_changed = True
-                y += 1
-            z += 1
-    return plan
-
-#####
-# iteration_politiques: Algorithme d'itération par politiques, qui retourne le plan optimal et sa valeur.
-#
-# plan_initial: Le plan à utiliser pour initialiser l'algorithme d'itération par politiques.
-#
-# retour: Un tuple contenant le plan optimal et son tableau de valeurs.
-### 
-def iteration_politiques(mdp, plan_initial):
-
-
     plan_prime = [1] * len(mdp.etats)
 
     actions = [0,1,2]
@@ -148,4 +109,16 @@ def iteration_politiques(mdp, plan_initial):
         if plan[j] == 2:
             plan[j] = 'DD'
         j += 1
+    return plan
+
+#####
+# iteration_politiques: Algorithme d'itération par politiques, qui retourne le plan optimal et sa valeur.
+#
+# plan_initial: Le plan à utiliser pour initialiser l'algorithme d'itération par politiques.
+#
+# retour: Un tuple contenant le plan optimal et son tableau de valeurs.
+### 
+def iteration_politiques(mdp, plan_initial):
+    values = calcul_valeur(mdp,plan_initial)
+    plan = calcul_plan(mdp, values)
     return plan, values
