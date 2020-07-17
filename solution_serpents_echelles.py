@@ -96,7 +96,7 @@ def calcul_plan(mdp, valeur):
 def iteration_politiques(mdp,plan_initial):
 
     actions = [0,1,2]
-    P = np.zeros((len(mdp.etats), len(actions), len(mdp.etats)))  # transition probability
+    P = np.zeros( (len(mdp.etats), len(actions), len(mdp.etats)) )  # transition probability
 
     for etat in mdp.etats:
         for act in actions:
@@ -112,20 +112,18 @@ def iteration_politiques(mdp,plan_initial):
                 P[etat, act, x[0]] = x[1]
 
 
-    policy = [0 for s in range(len(mdp.etats))]
+    policy = [0] * len(mdp.etats)
     values = [0] * len(mdp.etats)
 
     is_value_changed = True
-    iterations = 0
     while is_value_changed:
         is_value_changed = False
-        iterations += 1
+
         for s in range(len(mdp.etats)):
             values[s] = sum([P[s, policy[s], s1] * (mdp.recompenses[s1] + mdp.escompte * values[s1]) for s1 in range(len(mdp.etats))])
 
         for s in range(len(mdp.etats)):
             q_best = values[s]
-            # print "State", s, "q_best", q_best
             for a in range(len(actions)):
                 q_sa = sum([P[s, a, s1] * (mdp.recompenses[s1] + mdp.escompte * values[s1]) for s1 in range(len(mdp.etats))])
                 if q_sa > q_best:
