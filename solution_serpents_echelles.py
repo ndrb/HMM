@@ -95,30 +95,10 @@ def calcul_plan(mdp, valeur):
 ### 
 def iteration_politiques(mdp,plan_initial):
 
-    # plan = plan_initial/arbitraire
-    # Step 1:
-    plan = plan_initial
-
-    # Etape pour convergence
-    # Step 2: Calcule Valeur
-    # Pour tous etat, on calcule la valeur du plan sur cette etat en resolvant le system de |S| equation et |S| inconnu
-    # aka: V(plan, etat[i]) = R[s] + y * sum(P(s_prime | s, plan(s))) * V(plan,s_prime)
-    values = calcul_valeur(mdp, plan)
-
-
-    # Step 3: Calcule Plan
-    # Pour tous etat si il existe une action a tell que:
-    # (R(s) + y* sum( P(s_prime | s,a) V(plan,s_prime))) > V(plan,s) then loop!
-    plan = calcul_plan(mdp, values)
-
-    # BS START
-    states = mdp.etats
     actions = [0,1,2]
-    N_STATES = len(states)
-    N_ACTIONS = len(actions)
-    P = np.zeros((N_STATES, N_ACTIONS, N_STATES))  # transition probability
+    P = np.zeros((len(mdp.etats), len(actions), len(mdp.etats)))  # transition probability
 
-    for etat in states:
+    for etat in mdp.etats:
         for act in actions:
             holder_value = 0
             if act == 0:
@@ -131,35 +111,27 @@ def iteration_politiques(mdp,plan_initial):
             for x in lol:
                 P[etat, act, x[0]] = x[1]
 
-    #print(P)
 
-    gamma = mdp.escompte
-
-    # initialize policy and value arbitrarily
-    policy = [0 for s in range(N_STATES)]
-    V = np.zeros(N_STATES)
+    policy = [0 for s in range(len(mdp.etats))]
+    values = [0] * len(mdp.etats)
 
     is_value_changed = True
     iterations = 0
     while is_value_changed:
         is_value_changed = False
         iterations += 1
-        # run value iteration for each state
-        for s in range(N_STATES):
-            V[s] = sum([P[s, policy[s], s1] * (mdp.recompenses[s1] + gamma * V[s1]) for s1 in range(N_STATES)])
-            # print "Run for state", s
+        for s in range(len(mdp.etats)):
+            values[s] = sum([P[s, policy[s], s1] * (mdp.recompenses[s1] + mdp.escompte * values[s1]) for s1 in range(len(mdp.etats))])
 
-        for s in range(N_STATES):
-            q_best = V[s]
+        for s in range(len(mdp.etats)):
+            q_best = values[s]
             # print "State", s, "q_best", q_best
-            for a in range(N_ACTIONS):
-                q_sa = sum([P[s, a, s1] * (mdp.recompenses[s1] + gamma * V[s1]) for s1 in range(N_STATES)])
+            for a in range(len(actions)):
+                q_sa = sum([P[s, a, s1] * (mdp.recompenses[s1] + mdp.escompte * values[s1]) for s1 in range(len(mdp.etats))])
                 if q_sa > q_best:
                     policy[s] = a
                     q_best = q_sa
                     is_value_changed = True
-        # print "Policy now", policy
-    # BS FINISH
 
     #return plan
     plan = dict([(s, ' ') for s in mdp.etats])
@@ -176,4 +148,4 @@ def iteration_politiques(mdp,plan_initial):
         if plan[j] == 2:
             plan[j] = 'DD'
         j += 1
-    return plan, V
+    return plan, values
