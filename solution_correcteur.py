@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 #####
-# VotreNom (VotreMatricule) .~= À MODIFIER =~.
+# Nader Baydoun (20156885)
 ###
 
 from pdb import set_trace as dbg  # Utiliser dbg() pour faire un break dans votre code.
