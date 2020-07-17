@@ -57,8 +57,9 @@ def calcul_valeur(mdp, plan):
 def calcul_plan(mdp, valeur):
     plan_prime = [1] * len(mdp.etats)
 
+    # Je change les actions de char a une liste de valeur int pour simplifier comment je traverse tous les actions possible
     actions = [0,1,2]
-    P = np.zeros( (len(mdp.etats), len(actions), len(mdp.etats)) )  # transition probability
+    transition = np.zeros( (len(mdp.etats), len(actions), len(mdp.etats)) )  # transition probability
     for etat in mdp.etats:
         for act in actions:
             holder_value = 0
@@ -70,31 +71,42 @@ def calcul_plan(mdp, valeur):
                 holder_value = 'DD'
             lol = mdp.modele_transition[(etat,holder_value)]
             for x in lol:
-                P[etat, act, x[0]] = x[1]
+                transition[etat, act, x[0]] = x[1]
 
     values = [0] * len(mdp.etats)
 
-    is_value_changed = True
-    while is_value_changed:
-        is_value_changed = False
+    changed = True
+    while changed:
+        changed = False
 
-        for s in range(len(mdp.etats)):
+        i = 0
+        while i < len(mdp.etats):
             cumulative_sum_test = 0
-            for s1 in range(len(mdp.etats)):
-                cumulative_sum_test += P[s, plan_prime[s], s1]  * (mdp.recompenses[s1] + mdp.escompte * values[s1])
-            values[s] = cumulative_sum_test
+            j = 0
+            while j < len(mdp.etats):
+                cumulative_sum_test += transition[i, plan_prime[i], j]  * (mdp.recompenses[j] + mdp.escompte * values[j])
+                j += 1
+            values[i] = cumulative_sum_test
+            i += 1
 
+        i = 0
+        while i < len(mdp.etats):
+            best = values[i]
+            j = 0
+            while j < len(actions):
+                cumulative_sum = 0
+                z = 0
+                while z < len(mdp.etats):
+                    cumulative_sum += transition[i, j, z] * (mdp.recompenses[z] + mdp.escompte * values[z])
+                    z += 1
+                new_val = cumulative_sum
+                if new_val > best:
+                    plan_prime[i] = j
+                    best = new_val
+                    changed = True
+                j += 1
+            i += 1
 
-        for s in range(len(mdp.etats)):
-            q_best = values[s]
-            for a in range(len(actions)):
-                q_sa = sum([P[s, a, s1] * (mdp.recompenses[s1] + mdp.escompte * values[s1]) for s1 in range(len(mdp.etats))])
-                if q_sa > q_best:
-                    plan_prime[s] = a
-                    q_best = q_sa
-                    is_value_changed = True
-
-    #return plan
     plan = dict([(s, ' ') for s in mdp.etats])
     i = 0
     while i < len(plan_prime):
