@@ -32,19 +32,17 @@ import numpy as np
 # retour: Un tableau Numpy 1D de float donnant la valeur de chaque état du mdp, selon leur ordre dans mdp.etats.
 ### 
 def calcul_valeur(mdp, plan):
-    values = [1] * len(mdp.etats)
-    real_actions = mdp.actions[0]
+
+    values = [0] * len(mdp.etats)
 
     i = 0
     while i < len(mdp.etats):
         cumulative_sum = 0
-
-        # So for modele transition[(6,'D')], the keys are [(3, 0.166), (8, 0.166), (9, 0.166), (10, 0.166), (12, 0.166), (18, 0.166)]
-        for move in real_actions:
-            for element in mdp.modele_transition[(i,move)]:
-                cumulative_sum += element[1]*values[i]
-
-        values[i] = mdp.recompenses[i] + mdp.escompte * cumulative_sum
+        j = 0
+        while j < len(mdp.etats):
+            cumulative_sum += mdp.modele_transition[i,plan[j]][0][1] * (mdp.recompenses[j] + mdp.escompte * values[j])
+            j += 1
+        values[i] = cumulative_sum
         i += 1
 
     return values
@@ -93,11 +91,13 @@ def calcul_plan(mdp, valeur):
 #
 # retour: Un tuple contenant le plan optimal et son tableau de valeurs.
 ### 
-def iteration_politiques(mdp,plan_initial):
+def iteration_politiques(mdp, plan_initial):
+
+
+    plan_prime = [1] * len(mdp.etats)
 
     actions = [0,1,2]
     P = np.zeros( (len(mdp.etats), len(actions), len(mdp.etats)) )  # transition probability
-
     for etat in mdp.etats:
         for act in actions:
             holder_value = 0
@@ -111,8 +111,6 @@ def iteration_politiques(mdp,plan_initial):
             for x in lol:
                 P[etat, act, x[0]] = x[1]
 
-
-    policy = [0] * len(mdp.etats)
     values = [0] * len(mdp.etats)
 
     is_value_changed = True
@@ -120,22 +118,26 @@ def iteration_politiques(mdp,plan_initial):
         is_value_changed = False
 
         for s in range(len(mdp.etats)):
-            values[s] = sum([P[s, policy[s], s1] * (mdp.recompenses[s1] + mdp.escompte * values[s1]) for s1 in range(len(mdp.etats))])
+            cumulative_sum_test = 0
+            for s1 in range(len(mdp.etats)):
+                cumulative_sum_test += P[s, plan_prime[s], s1]  * (mdp.recompenses[s1] + mdp.escompte * values[s1])
+            values[s] = cumulative_sum_test
+
 
         for s in range(len(mdp.etats)):
             q_best = values[s]
             for a in range(len(actions)):
                 q_sa = sum([P[s, a, s1] * (mdp.recompenses[s1] + mdp.escompte * values[s1]) for s1 in range(len(mdp.etats))])
                 if q_sa > q_best:
-                    policy[s] = a
+                    plan_prime[s] = a
                     q_best = q_sa
                     is_value_changed = True
 
     #return plan
     plan = dict([(s, ' ') for s in mdp.etats])
     i = 0
-    while i < len(policy):
-        plan[i] = policy[i]
+    while i < len(plan_prime):
+        plan[i] = plan_prime[i]
         i += 1
     j = 0
     while j < len(plan):
